@@ -20,37 +20,20 @@ import java.util.List;
 public class Main extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         TestSmellDetector testSmeller = new TestSmellDetector(new DefaultThresholds());
-        String rootPath = "src/test";
+        File rootPath = new File("src/test");
 
         // Search for the directory, place it into javaTestDirectory
-        String javaTestDirectory = "";
-        File directory = new File(rootPath);
-        if (directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        File[] innerFiles = file.listFiles();
-                        if (innerFiles != null) {
-                            for (File innerFile : innerFiles) {
-                                if (innerFile.isFile() && innerFile.getName().endsWith(".java")) {
-                                    javaTestDirectory = file.getAbsolutePath();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        File[] files = new File(javaTestDirectory).listFiles();
+        List<String> javaTestDirectory = directoryFounder(rootPath);
+  
+        
+        File[] files = new File(javaTestDirectory.get(0)).listFiles();
         String result = "";
+
         int counter = files.length;
 
         for (File file : files) {
-            String filePath = javaTestDirectory + FileSystems.getDefault().getSeparator() + file.getName();
-            String replacedPath = javaTestDirectory.replace("src" + FileSystems.getDefault().getSeparator() + "test", "src" + FileSystems.getDefault().getSeparator() + "main");
+            String filePath = javaTestDirectory.get(0) + FileSystems.getDefault().getSeparator() + file.getName();
+            String replacedPath = javaTestDirectory.get(0).replace("src" + FileSystems.getDefault().getSeparator() + "test", "src" + FileSystems.getDefault().getSeparator() + "main");
 
             String javaFileName = file.getName().substring(0, file.getName().length() - 9) + ".java";
             String fullPath = replacedPath + FileSystems.getDefault().getSeparator() + javaFileName;
@@ -58,14 +41,14 @@ public class Main extends AbstractMojo {
             result += "Tests," + filePath + "," + fullPath + ((counter != 1) ? "\n" : "");
             counter--;
         }
-
+        System.out.print("hola3");
         String[] linesItem;
         String[] lineItem;
         TestFile testFile;
         List<TestFile> testFiles = new ArrayList<>();
         // Use comma as separator instead of '\n'
         linesItem = result.split("\n");
-
+        System.out.print("hola4");
         for (String line : linesItem) {
             lineItem = line.split(",");
 
@@ -74,7 +57,7 @@ public class Main extends AbstractMojo {
             testFile = new TestFile(lineItem[0], lineItem[1], productionFilePath);
             testFiles.add(testFile);
         }
-
+        System.out.print("hola5");
 
         /*
           Initialize the output file - Create the output file and add the column names
@@ -145,6 +128,24 @@ public class Main extends AbstractMojo {
         }
 
         System.out.println("end");
+    }
+
+    public static List<String> directoryFounder(File directorio) {
+        List<String> directorios = new ArrayList<>();
+        if (directorio.isDirectory()) {
+            File[] archivos = directorio.listFiles();
+            if (archivos != null) {
+                for (File archivo : archivos) {
+                    if (archivo.isDirectory()) {
+                        List<String> subDirectorios = directoryFounder(archivo);
+                        directorios.addAll(subDirectorios);
+                    } else if (archivo.isFile() && archivo.getName().endsWith(".java")) {
+                        directorios.add(directorio.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        return directorios;
     }
 
 }
